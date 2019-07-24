@@ -949,6 +949,62 @@ func (x *Big) Precision() int {
 // Other decimal libraries may refer to Quantize as Truncate.
 func (z *Big) Quantize(n int) *Big { return z.Context.Quantize(z, n) }
 
+//向下取，n 为小数位数
+func (z *Big) FloorN(n int) *Big {
+	scale := New(1, n)
+	z.Quo(z, scale)
+	floor(z, z)
+	z.Mul(z, scale)
+	//位数补全
+	if n > 0 && z.Scale() >= 0 && z.Scale() < n {
+		y := z.String()
+		if z.Scale() == 0 {
+			y = y + "." + strings.Repeat("0", n)
+		} else {
+			y = y + strings.Repeat("0", n-z.Scale())
+		}
+		z.SetString(y)
+	}
+	return z
+}
+func floor(z, x *Big) *Big {
+	if z.CheckNaNs(x, nil) {
+		return z
+	}
+	ctx := z.Context
+	ctx.RoundingMode = ToNegativeInf
+	return ctx.RoundToInt(z.Copy(x))
+}
+
+//向上取，n 为小数位数
+func (z *Big) CeilN(n int) *Big {
+	scale := New(1, n)
+	z.Quo(z, scale)
+	ceil(z, z)
+	z.Mul(z, scale)
+	//位数补全
+	if n > 0 && z.Scale() >= 0 && z.Scale() < n {
+		y := z.String()
+		if z.Scale() == 0 {
+			y = y + "." + strings.Repeat("0", n)
+		} else {
+			y = y + strings.Repeat("0", n-z.Scale())
+		}
+		z.SetString(y)
+	}
+	return z
+}
+func ceil(z, x *Big) *Big {
+	// ceil(x) = -floor(-x)
+	return z.Neg(floor(z, copyNeg(z, x)))
+}
+func copyNeg(z, x *Big) *Big {
+	if x.Signbit() {
+		return z.CopySign(x, New(+1, 0))
+	}
+	return z.CopySign(x, New(-1, 0))
+}
+
 // Quo sets z to x / y and returns z.
 func (z *Big) Quo(x, y *Big) *Big { return z.Context.Quo(z, x, y) }
 
