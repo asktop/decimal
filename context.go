@@ -14,7 +14,7 @@ const (
 	MaxPrecision       = MaxScale         // largest allowed Context precision.
 	MinPrecision       = 1                // smallest allowed Context precision.
 	UnlimitedPrecision = MaxPrecision + 1 // no precision, but may error.
-	DefaultPrecision   = 16               // default precision for literals.
+	DefaultPrecision   = 32               // default precision for literals.
 )
 
 // Context is a per-decimal contextual object that governs specific operations.
