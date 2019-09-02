@@ -1,6 +1,9 @@
-## decimal定制化
+<h1> github.com/ericlagergren/decimal定制化 </h1>
 
-## github.com/ericlagergren/decimal
+
+[TOC]
+
+
 
 ### 1. 修改为decimal转string时不使用科学计数法
 
@@ -33,6 +36,8 @@ func (x *Big) MarshalText() ([]byte, error) {
 	...
 }
 ```
+
+
 
 ### 2. 修改decimal可以scan读取sql的数据
 
@@ -108,5 +113,80 @@ func unquoteIfQuoted(value interface{}) (string, error) {
 }
 ```
 
+
+
+### 3. 修改默认精度 
+
+**github.com/ericlagergren/decimal/context.go**
+
+```go
+//修改:16为32
+DefaultPrecision   = 32               // default precision for literals.
+```
+
+
+
+### 4. 添加向上下取小数方法 
+
+**github.com/ericlagergren/decimal/big.go**
+
+```go
+//添加:
+//向下取，n 为小数位数
+ func (z *Big) FloorN(n int) *Big {
+ 	scale := New(1, n)
+ 	z.Quo(z, scale)
+ 	floor(z, z)
+ 	z.Mul(z, scale)
+ 	//位数补全
+ 	if n > 0 && z.Scale() >= 0 && z.Scale() < n {
+ 		y := z.String()
+ 		if z.Scale() == 0 {
+ 			y = y + "." + strings.Repeat("0", n)
+ 		} else {
+ 			y = y + strings.Repeat("0", n-z.Scale())
+ 		}
+ 		z.SetString(y)
+ 	}
+ 	return z
+ }
+ func floor(z, x *Big) *Big {
+ 	if z.CheckNaNs(x, nil) {
+ 		return z
+ 	}
+ 	ctx := z.Context
+ 	ctx.RoundingMode = ToNegativeInf
+ 	return ctx.RoundToInt(z.Copy(x))
+ }
+
+  //向上取，n 为小数位数
+ func (z *Big) CeilN(n int) *Big {
+ 	scale := New(1, n)
+ 	z.Quo(z, scale)
+ 	ceil(z, z)
+ 	z.Mul(z, scale)
+ 	//位数补全
+ 	if n > 0 && z.Scale() >= 0 && z.Scale() < n {
+ 		y := z.String()
+ 		if z.Scale() == 0 {
+ 			y = y + "." + strings.Repeat("0", n)
+ 		} else {
+ 			y = y + strings.Repeat("0", n-z.Scale())
+ 		}
+ 		z.SetString(y)
+ 	}
+ 	return z
+ }
+ func ceil(z, x *Big) *Big {
+ 	// ceil(x) = -floor(-x)
+ 	return z.Neg(floor(z, copyNeg(z, x)))
+ }
+ func copyNeg(z, x *Big) *Big {
+ 	if x.Signbit() {
+ 		return z.CopySign(x, New(+1, 0))
+ 	}
+ 	return z.CopySign(x, New(-1, 0))
+ }
+```
 
 
