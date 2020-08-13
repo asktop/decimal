@@ -1,11 +1,3 @@
-# 大数字、浮点数工具包
-
-## 1. 使用说明
-
-> 使用说明详见 `decimal_test.go` 测试用例
-
-## 2. 使用测试用例
-```go
 package decimal
 
 import (
@@ -82,5 +74,3 @@ func TestYunSuan(t *testing.T) {
     //比较 1:大于；0：等于，-1：小于
     fmt.Println(a.Cmp(b)) //1
 }
-
-```
